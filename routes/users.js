@@ -104,4 +104,21 @@ router.get("/:idUser/teams", (req, res) => {
   );
 });
 
+// recupération liste des équipes par rapport à un user
+router.get("/:idUser/clients", (req, res) => {
+  const idUser = req.params.idUser;
+
+  connection.query(
+    "SELECT c.id, c.firstname, c.lastname, c.createAt, c.age, c.profession, c.profession2, c.family_situation, c.isRecommendation, c.dateR1, c.client_recommendation, c.stop_stadeR1, c.objectif, c.id_user, c.email, c.portable FROM client as c JOIN user as u ON u.id = c.id_user WHERE u.id = ? ",
+    idUser,
+    (err, results) => {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.json(results);
+      }
+    }
+  );
+});
+
 module.exports = router;
