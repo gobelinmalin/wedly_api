@@ -98,7 +98,20 @@ router.get("/:idUser/teams", (req, res) => {
       if (err) {
         res.sendStatus(500);
       } else {
-        res.json(results);
+        results.map(suppleant => {
+          const idUser = suppleant.id_suppleant;
+          connection.query(
+            "SELECT * FROM user WHERE user.id = ? ",
+            idUser,
+            (err, results) => {
+              if (err) {
+                res.sendStatus(500);
+              } else {
+                res.json(results);
+              }
+            }
+          );
+        });
       }
     }
   );
