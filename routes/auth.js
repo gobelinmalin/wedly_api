@@ -5,29 +5,41 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 router.post("/login", (req, res) => {
-  const {email, password} = req.body;
-  connection.query("SELECT * FROM user WHERE email = ?", email, (err, user) => {
-    if (err) {
-      res.status(500).send("Error email");
-    } else {
-      const samePassword = bcrypt.compareSync(password, user[0].password);
-      if (!samePassword) {
-        res.status(500).send("Error password");
+  const formData = {
+    email: req.body.email,
+    password: req.body.password,
+  };
+  connection.query(
+    "SELECT * FROM user WHERE email = ?",
+    [formData.email],
+    (err, user) => {
+      if (err) {
+        res.status(500).send("Erreur mauvais utilisateur"); // no user found with this email
       } else {
-        jwt.sign(
-          {user},
-          {
-            expiresIn: "2h",
-          },
-          (err, token) => {
-            res.json({
-              token,
-            });
-          }
+        const isSamePass = bcrypt.compareSync(
+          formData.password,
+          user[0].password
         );
+        if (!isSamePass) {
+          res.status(500).send("Mot de passe incorrect");
+        } else {
+          // 'secretKey' will be in .env file => here, process.env.TOKEN_SECRET_KEY
+          jwt.sign({user}, process.env.JWT, (err, token) => {
+            if (err) {
+              res.status(500).send("Token non crée");
+            } else {
+              res.json({
+                token,
+                email: user[0].email,
+                lastname: user[0].lastname,
+                firstname: user[0].firstname,
+              });
+            }
+          });
+        }
       }
     }
-  });
+  );
 });
 
 router.post("/", verifyToken, (req, res) => {
@@ -37,7 +49,11 @@ router.post("/", verifyToken, (req, res) => {
       res.status(500).send("Access denied");
     } else {
       res.json({
-        authData,
+        id: authData.user[0].id,
+        firstname: authData.user[0].firstname,
+        lastname: authData.user[0].lastname,
+        createAt: authData.user[0].createAt,
+        iat: authData.iat,
       });
     }
   });
